@@ -21,10 +21,9 @@ import groovyx.net.http.RESTClient
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
-import spock.lang.Unroll
 
 /**
- * Tests for Repo Extension Point: Web Scripts
+ * Tests the Hello World Platform Web Scripts
  */
 // Assume a workflow.
 // Make sure we run each test method in the order they are written in the class and re-use authentication context for each test.
@@ -41,7 +40,7 @@ class RepoWebScriptITSpec extends Specification {
         restClient.auth.basic userName, password
 
         when: "We invoke the Hello World Web Script"
-        def response = restClient.get( path: 'tutorial/helloworld') // Important! No leading slash
+        def response = restClient.get( path: 'sample/helloworld') // Important! No leading slash
 
         then: "HTTP response status should be 200 and response format should be in HTML"
         response.status == 200
@@ -49,27 +48,5 @@ class RepoWebScriptITSpec extends Specification {
 
         and: "Returned HTML page should contain Hello World"
         response.data.text().contains("Hello World")
-    }
-
-    @Unroll("Search for #keyword matches #expectedResult document")
-    def 'Search for ACME Documents using variations of keyword'() {
-        when:
-        def response = restClient.get( path: 'tutorial/acmedocs', query: ['q' : keyword])
-
-        then:
-        with(response) {
-            status == 200
-            contentType == "application/json"
-        }
-
-        and:
-        response.data.acmeDocs.size == expectedResult
-        response.data.acmeDocs[0].name == expectedName
-
-        where:
-        keyword    | expectedResult | expectedName
-        "Sample"   | 1              | "acmedocument.txt"
-        "Sampled"  | 1              | "acmedocument.txt"
-        "Sampling" | 1              | "acmedocument.txt"
     }
 }

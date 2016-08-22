@@ -31,13 +31,16 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 
 /**
- * Make sure the ACME Content model is present
+ * Make sure the Custom Content model is present
  *
  * @author martin.bergljung@alfresco.com
  */
-@ContextConfiguration(locations = [ "classpath:alfresco/application-context.xml", "classpath:alfresco/remote-api-context.xml", "classpath:alfresco/web-scripts-application-context.xml" ] )
+@ContextConfiguration(locations = [ "classpath:alfresco/application-context.xml",
+                                    "classpath:alfresco/remote-api-context.xml",
+                                    "classpath:alfresco/web-scripts-application-context.xml" ] )
 @Stepwise
 class CustomContentModelTestSpec extends Specification {
+    static final String CM_MODEL_NS = "{http://www.alfresco.org/model/content/1.0}";
     static final String ACME_MODEL_NS = "{http://www.acme.org/model/content/1.0}";
     static final String ADMIN_USER_NAME = "admin";
 
@@ -51,60 +54,34 @@ class CustomContentModelTestSpec extends Specification {
     def "Test custom content model presence"() {
         expect:
         Collection<QName> allContentModels = serviceRegistry.dictionaryService.allModels
-        allContentModels.contains(createQName("contentModel"))
+        allContentModels.contains(createAcmeQName("contentModel"))
     }
 
-    def "Create a Contract file"() {
+    def "Create an ACME Document"() {
         setup:
-        def type = createQName("contract")
+        def type = createAcmeQName("document")
         def textContent = "Hello World!";
         def nodeProperties = [
-                (createQName("documentId")):"DOC001",
-                (createQName("securityClassification")):"Company Confidential",
-                (createQName("contractName")):"The first contract",
-                (createQName("contractId")): "C001"
+                (createAcmeQName("documentId")):"DOC001",
+                (createAcmeQName("securityClassification")):"Company Confidential"
         ]
-        def aspect = createQName("webPublished")
+        def aspect = createCmQName("titled")
         def aspectProperties = [
-                (createQName("publishedDate")):new Date()
+                (createCmQName("title")):"Sample Title",
+                (createCmQName("description")):"Sample Description"
         ]
 
         when:
-        def nodeRef = createNode("aContractFile.txt", type, nodeProperties)
+        def nodeRef = createNode("aSampleFile.txt", type, nodeProperties)
         addFileContent(nodeRef, textContent)
         serviceRegistry.nodeService.addAspect(nodeRef, aspect, aspectProperties)
 
         then:
         serviceRegistry.nodeService.getType(nodeRef).equals(type)
-        serviceRegistry.nodeService.hasAspect(nodeRef, createQName("securityClassified"))
+        serviceRegistry.nodeService.hasAspect(nodeRef, createAcmeQName("securityClassified"))
         serviceRegistry.nodeService.hasAspect(nodeRef, aspect)
-        serviceRegistry.nodeService.getProperty(nodeRef, createQName("contractName")).equals("The first contract")
+        serviceRegistry.nodeService.getProperty(nodeRef, createCmQName("title")).equals("Sample Title")
         readTextContent(nodeRef).equals(textContent)
-
-        cleanup:
-        if (nodeRef != null) serviceRegistry.nodeService.deleteNode(nodeRef)
-    }
-
-    def "Create a Project folder"() {
-        setup:
-        def type = createQName("project")
-        def aspect = createQName("projectIdentifier")
-        def nodeProperties = [
-                (createQName("projectName")):"Project X One",
-                (createQName("projectDescription")):"he first project called X One",
-                (createQName("projectStartDate")):new GregorianCalendar(2016, Calendar.JANUARY, 1)
-        ]
-        def aspectProperties = [
-                (createQName("projectNumber")):"PROJ001"
-        ]
-
-        when:
-        def nodeRef = createNode("Project-X1", type, nodeProperties)
-        serviceRegistry.nodeService.addAspect(nodeRef, aspect, aspectProperties)
-
-        then:
-        serviceRegistry.nodeService.getType(nodeRef).equals(type)
-        serviceRegistry.nodeService.hasAspect(nodeRef, aspect)
 
         cleanup:
         if (nodeRef != null) serviceRegistry.nodeService.deleteNode(nodeRef)
@@ -183,8 +160,18 @@ class CustomContentModelTestSpec extends Specification {
      * @param localname the local content model name without namespace specified
      * @return the full ACME QName including namespace
      */
-    def QName createQName(String localname) {
+    def QName createAcmeQName(String localname) {
         return QName.createQName("${ACME_MODEL_NS}${localname}")
+    }
+
+    /**
+     * Create a QName for the CM content model (out-of-the-box model)
+     *
+     * @param localname the local content model name without namespace specified
+     * @return the full CM QName including namespace
+     */
+    def QName createCmQName(String localname) {
+        return QName.createQName("${CM_MODEL_NS}${localname}")
     }
 
     /**

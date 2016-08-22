@@ -21,7 +21,7 @@ package org.alfresco.tutorials.testSpecs.context;
 import org.alfresco.model.ContentModel
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.ServiceRegistry;
-import org.alfresco.tutorial.demoamp.DemoComponent;
+import org.alfresco.test.platformsample.DemoComponent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import spock.lang.Specification
@@ -33,7 +33,9 @@ import spock.lang.Stepwise;
  *
  * @author Martin Bergljung
  */
-@ContextConfiguration(locations = [ "classpath:alfresco/application-context.xml", "classpath:alfresco/remote-api-context.xml", "classpath:alfresco/web-scripts-application-context.xml" ] )
+@ContextConfiguration(locations = [ "classpath:alfresco/application-context.xml",
+                                    "classpath:alfresco/remote-api-context.xml",
+                                    "classpath:alfresco/web-scripts-application-context.xml" ] )
 @Stepwise
 public class DemoComponentTestSpec extends Specification {
     private static final String ADMIN_USER_NAME = "admin";
@@ -66,9 +68,9 @@ public class DemoComponentTestSpec extends Specification {
         given: "I get the Company Home node reference via the Demo Component"
         def companyHome = demoComponent.getCompanyHome();
 
-        // There's 7 folders under Company home by default but a bootstrap repo AMP adds a file and a patch adds a folder
-        expect: "There to be 9 nodes under Company Home"
+        // There's 7 folders under Company home
+        expect: "There to be 7 nodes under Company Home"
         def childNodeCount = demoComponent.childNodesCount(companyHome);
-        childNodeCount == 9
+        childNodeCount == 7
     }
 }

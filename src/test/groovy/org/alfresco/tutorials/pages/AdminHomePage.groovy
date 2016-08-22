@@ -36,25 +36,6 @@ class   AdminHomePage extends Page {
     // A description of the page content, allowing for easy access to the parts declared here.
     static content = {
         /*
-        <span data-dojo-attach-point="containerNode,textDirNode" id="HEADER_REPOSITORY_text"
-	          class="alf-menu-bar-label-node">
-            <a href="/share/page/repository" title="Repository"
-                class="alfresco-navigation-_HtmlAnchorMixin" tabindex="-1">Repository
-            </a>
-        </span>
-         */
-        repositoryLink(to: RepositoryBrowseCompanyHomeFolderPage) { $("span#HEADER_REPOSITORY_text a") }
-
-        /*
-            <span data-dojo-attach-point="containerNode,textDirNode" id="HEADER_ADMIN_CONSOLE_text"
-                  class="alf-menu-bar-label-node">
-                <a href="/share/page/console/admin-console/application" title="Admin Tools"
-                   class="alfresco-navigation-_HtmlAnchorMixin" tabindex="-1">Admin Tools
-                </a>
-         */
-        adminToolsLink(to: AdminToolsPage) { $("span#HEADER_ADMIN_CONSOLE_text a") }
-
-        /*
            <h1 class="alfresco-header-Title alfresco-debug-Info highlight" id="HEADER_TITLE" widgetid="HEADER_TITLE">
              <div class="alfresco-debug-WidgetInfo" id="uniqName_1_49" widgetid="uniqName_1_49">
                 <img data-dojo-attach-event="ondijitclick:showInfo" alt="Information about widget HEADER_TITLE" class="image" src="/share/res/js/aikau/1.0.8.1/alfresco/debug/css/images/info-16.png" />
@@ -65,40 +46,12 @@ class   AdminHomePage extends Page {
              */
         dashboardName(wait: true) { $("h1#HEADER_TITLE span").text() }
 
-        /*
-        <div id="alf-ft">
-            <div id="global_x002e_footer">
-                <div id="global_x002e_footer_x0023_New_Content">
-		            <div>
-		                Hello World!
-		            </div>
-         */
-        newContentDiv { $("div#alf-ft div div div") }
-
-        /*
-        <div class="title">My Sites</div>
-         */
-        mySitesDivExists { $("div.title").text() == "My Sites" }
-
         // <span class="copyright">
         // <a href="#" onclick="Alfresco.module.getAboutShareInstance().show(); return false;"><img src="/share/res/components/images/alfresco-share-logo.png" alt="Alfresco Share" border="0"/></a>
         //    <span>Supplied free of charge with
         copyrightText { $("span.copyright span").text() }
 
-        /*
-        <div class="dashlet webview webview-mode-default resizable yui-resize" id="yui-gen4">
-          <div class="title">
-             <span target="_blank" class="default-title" id="page_x002e_component-2-2_x002e_user_x007e_admin_x007e_dashboard_x0023_default-default-title">Web View</span>
-             <span target="_blank" class="notsecure-title" id="page_x002e_component-2-2_x002e_user_x007e_admin_x007e_dashboard_x0023_default-notsecure-title">Web View</span>
-             <a target="_blank" class="iframe-title" id="page_x002e_component-2-2_x002e_user_x007e_admin_x007e_dashboard_x0023_default-iframe-title" href="http://www.alfresco.com">Alfresco!</a>
-          </div>
-         */
-        webViewTitle  { $("div.title a.iframe-title").text() }
-
-        //  <div id="additional-footer">
-        additonalFooterText { $("div#additional-footer").text() }
-
-        // <div data-dojo-attach-point="parentNode" class="alfresco-layout-LeftAndRight widgets alfresco-header-Header alfresco-debug-Info highlight"
+         // <div data-dojo-attach-point="parentNode" class="alfresco-layout-LeftAndRight widgets alfresco-header-Header alfresco-debug-Info highlight"
         //      id="SHARE_HEADER" widgetid="SHARE_HEADER">
         headerDiv { $("div#SHARE_HEADER") }
 

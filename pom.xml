@@ -4,7 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.alfresco.test</groupId>
     <artifactId>integration-test-runner</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <name>Alfresco Integration Test Runner</name>
     <description>Starts an embedded Tomcat 7 server, then executes all integration tests in this project, and then
         shutdown Tomcat
@@ -194,7 +196,25 @@
             <scope>test</scope>
         </dependency>
 
-        <!--==================== Bring in Alfresco specific components needed during Spring context tests ===========-->
+        <!--==================== Bring in the H2 Database and
+                                 Alfresco specific components needed during Spring context tests ====================-->
+
+        <!-- Bring in the H2 Database scripts needed when running embedded, they are now
+             available from the standard generated artifacts, no longer needed to be picked
+             up from the alfresco-rad project -->
+        <dependency>
+            <groupId>${alfresco.groupId}</groupId>
+            <artifactId>alfresco-repository</artifactId>
+            <version>${alfresco.platform.version}</version>
+            <classifier>h2scripts</classifier>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
         <!-- Contains the main Alfresco Spring context file alfresco/application-context.xml -->
         <dependency>
@@ -233,31 +253,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Explicitly define h2 SQL scripts dependency so we can get to
-             alfresco/ibatis/#resource.dialect#/activities-insert-SqlMap.xml etc. -->
-        <dependency>
-            <groupId>${alfresco.groupId}</groupId>
-            <artifactId>alfresco-repository</artifactId>
-            <version>${alfresco.platform.version}</version>
-            <classifier>h2scripts</classifier>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <!-- Explicitly define h2 database dependency as we don't have src/test/properties/local/alfresco-global.properties,
-              which would bring it in automatically,useful also when not building with Maven -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <version>${h2.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <!-- Dependencies on Repository JARs under tests, this is needed so you can:
             * get to any component class that are under test, such as the DemoComponent
             * get to all the Spring context files for each extension
@@ -272,6 +267,14 @@
     </dependencies>
 
     <build>
+        <!-- Filter files like alfresco-global.properties -->
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+        </testResources>
+
         <plugins>
             <!-- Configure the GMaven plugin, it will compile the Groovy files for us -->
             <plugin>
@@ -383,11 +386,18 @@
                 <artifactId>tomcat7-maven-plugin</artifactId>
                 <version>${maven.tomcat.version}</version>
                 <dependencies>
+                    <!-- Bring in the h2 database that we use for metadata -->
+                    <dependency>
+                        <groupId>com.h2database</groupId>
+                        <artifactId>h2</artifactId>
+                        <version>${h2.version}</version>
+                    </dependency>
+
                     <!-- Bring in the H2 Database scripts needed when running embedded, they are now
                          available from the standard generated artifacts, no longer needed to be picked
                          up from the alfresco-rad project -->
                     <dependency>
-                        <groupId>org.alfresco</groupId>
+                        <groupId>${alfresco.groupId}</groupId>
                         <artifactId>alfresco-repository</artifactId>
                         <version>${alfresco.platform.version}</version>
                         <classifier>h2scripts</classifier>
@@ -398,6 +408,7 @@
                             </exclusion>
                         </exclusions>
                     </dependency>
+
                     <!-- Explicitly bring in the Plexus Archiver so assembly goes quicker -->
                     <dependency>
                         <groupId>org.codehaus.plexus</groupId>

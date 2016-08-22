@@ -19,12 +19,11 @@ package org.alfresco.tutorials.testSpecs.integration
 
 import geb.spock.GebReportingSpec
 import org.alfresco.tutorials.pages.AdminHomePage
-import org.alfresco.tutorials.pages.AdminToolsPage
 import org.alfresco.tutorials.pages.LoginPage
 import spock.lang.Stepwise
 
 /**
- * Tests for Share Extension Point: Share Themes
+ * Test Hello World Sample Aikau Page
  * <p/>
  * We extend our test specification from GebReportingSpec. You can also extend from GebSpec but GebReportingSpec will
  * automatically create a screenshot if your test fails, and scrape HTML, which is more convenient.
@@ -35,8 +34,7 @@ import spock.lang.Stepwise
 // Make sure we run each test method in the order they are written in the class and re-use browser context for each test.
 // If one method fails the test will stop.
 @Stepwise
-class ShareThemeITSpec extends GebReportingSpec {
-
+class HelloWorldPageITSpec extends GebReportingSpec {
     def "Test valid login"() {
         given: "I navigate to the login page"
         def currentPage = to LoginPage
@@ -48,37 +46,17 @@ class ShareThemeITSpec extends GebReportingSpec {
         at AdminHomePage
     }
 
-    def "Test navigating to the Admin Tools page"() {
+    def "Test navigating to the Hello World Sample Page"() {
         given: "I'm at the Admin User Dashboard Page"
         def currentPage = at AdminHomePage
 
-        when: "I click on the Admin Tools link in the top menu"
-        currentPage.adminToolsLink.click()
+        when: "And I navigate to the Hello World Page"
+        currentPage = to HelloWorldPage
 
-        then: "I'm redirected to the Admin Tools page"
-        at AdminToolsPage
-    }
-
-    def "Test selecting the Tutorial Theme from the Drop down"() {
-        given: "I'm at the Admin Tools page"
-        def currentPage = at AdminToolsPage
-
-        when: "I select the 'Tutorial Theme' in the 'Theme' drop down menu and click Apply button"
-        currentPage.themeDropDown = 'Tutorial Theme'
-        currentPage.applyButton.click()
-
-        then: "I'm still on the Admin Tools Page"
-        at AdminToolsPage
-    }
-
-    def "Test that the new Tutorial Theme is applied to both Aikau and YUI bits"() {
-        given: "I navigate to the Admin User Dashboard Page"
-        def currentPage = to AdminHomePage
-
-        expect: "The color for menu texts to be yellow (Aikau) and dashlet links to be purple (YUI)"
-        currentPage.headerDiv.css("color") == "rgba(255, 255, 0, 1)" // same as "#FFFF00" yellow
-        currentPage.headerSitesMenuDiv.css("color") == "rgba(255, 255, 0, 1)" // same as "#FFFF00" yellow
-        currentPage.myTasksDashletStartWorkflowLink.css("color") == "rgba(127, 0, 255, 1)" // same as "#7F00FF" purple
+        then: "Then the page has Hello title and Hello sample widget"
+        currentPage.headerTitle == "This is a sample HELLO page"
+        currentPage.simpleLogoDivExists
+        currentPage.simpleMessageText == "Hello from i18n"
     }
 }
 
