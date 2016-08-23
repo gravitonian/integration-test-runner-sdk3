@@ -515,44 +515,6 @@
                         <artifactId>plexus-archiver</artifactId>
                         <version>2.3</version>
                     </dependency>
-
-                    <!-- The following dependency is needed, otherwise you get
-                         Caused by: java.lang.NoSuchMethodError:
-                            javax.servlet.ServletContext.getSessionCookieConfig()Ljavax/servlet/SessionCookieConfig
-                       This method is in Servlet API 3.0
-
-                    <dependency>
-                        <groupId>javax.servlet</groupId>
-                        <artifactId>javax.servlet-api</artifactId>
-                        <version>3.0.1</version>
-                    </dependency>
-                    -->
-
-                    <!-- Bring in the h2 database that we use for metadata
-                    <dependency>
-                        <groupId>com.h2database</groupId>
-                        <artifactId>h2</artifactId>
-                        <version>${h2.version}</version>
-                    </dependency>
-                    -->
-
-                    <!-- Bring in the H2 Database scripts needed when running embedded, they are now
-                         available from the standard generated artifacts, no longer needed to be picked
-                         up from the alfresco-rad project
-                    <dependency>
-                        <groupId>${alfresco.groupId}</groupId>
-                        <artifactId>alfresco-repository</artifactId>
-                        <version>${alfresco.platform.version}</version>
-                        <classifier>h2scripts</classifier>
-                        <exclusions>
-                            <exclusion>
-                                <groupId>*</groupId>
-                                <artifactId>*</artifactId>
-                            </exclusion>
-                        </exclusions>
-                    </dependency>
-                    -->
-
                 </dependencies>
                 <executions>
                     <execution>
@@ -580,23 +542,9 @@
                          this setting ignores that fact. -->
                     <ignorePackaging>true</ignorePackaging>
 
-                    <!-- Make sure Catalina classes are picked up when we got virtual webapp contexts with classpaths.
-                         If true a new classLoader separated from maven core will be created to start.
-                         This does not work to run with, getting :
-                            NoSuchMethodError: javax.servlet.ServletContext.getSessionCookieConfig
-                                (which lives in Servlet API 3)
-                    <useSeparateTomcatClassLoader>false</useSeparateTomcatClassLoader>
-                                -->
-
                     <!-- Bring in stuff in the test classpath,
                          such as the alfresco-global.properties that should be used -->
                     <useTestClasspath>true</useTestClasspath>
-
-                    <!-- Should this class loader delegate to the parent class loader before searching its own
-                         repositories (i.e. the usual Java2 delegation model). Prevent parent classloader delegation,
-                         each webapp loads.
-                    <delegate>false</delegate>
-                    -->
 
                     <!-- Point to Solr Home and Temp dir -->
                     <systemProperties>
