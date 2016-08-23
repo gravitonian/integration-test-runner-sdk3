@@ -20,6 +20,7 @@ package org.alfresco.tutorials.testSpecs.integration
 import geb.spock.GebReportingSpec
 import org.alfresco.tutorials.pages.AdminHomePage
 import org.alfresco.tutorials.pages.LoginPage
+import org.alfresco.tutorials.pages.HelloWorldPage
 import spock.lang.Stepwise
 
 /**

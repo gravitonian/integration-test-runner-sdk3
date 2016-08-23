@@ -11,8 +11,10 @@
     <description>Starts an embedded Tomcat 7 server, then executes all integration tests in this project, and then
         shutdown Tomcat
     </description>
+    <packaging>pom</packaging>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Alfresco standard properties -->
@@ -59,6 +61,7 @@
     </properties>
 
     <dependencies>
+
         <!--==================== Bring in support for testing with Groovy and Spock BDD =============================-->
 
         <!-- Tests are expressed in Groovy -->
@@ -199,6 +202,13 @@
         <!--==================== Bring in the H2 Database and
                                  Alfresco specific components needed during Spring context tests ====================-->
 
+        <!-- Bring in the h2 database that we use for metadata -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>${h2.version}</version>
+        </dependency>
+
         <!-- Bring in the H2 Database scripts needed when running embedded, they are now
              available from the standard generated artifacts, no longer needed to be picked
              up from the alfresco-rad project -->
@@ -264,6 +274,18 @@
             <scope>test</scope>
         </dependency>
 
+        <!--==================== Include Servlet API here as provided ===============================================-->
+
+        <!-- Include Servlet API here as provided so we don't get weird clashes when starting Tomcat:
+                LinkageError: loader constraint violation: loader (instance of org/apache/catalina/loader/WebappClassLoader)
+                previously initiated loading for a different type with name "javax/servlet/ServletContext"
+         -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>3.0-alpha-1 </version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -276,6 +298,107 @@
         </testResources>
 
         <plugins>
+            <!-- Packaging for this project is pom, so we need to manually kick off test resource copy to classpath -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-testResources</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testResources</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Run goal unpack and unzip the content of the downloaded default solr-config.zip file into the
+                       alfresco-maven-sdk2-test/alf_data_dev/solr4/config directory
+                       (The solr-config.zip is brought in via the dependency section) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>unpack-solr-config</id>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <outputDirectory>${solr.home}</outputDirectory>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>${alfresco.groupId}</groupId>
+                                    <artifactId>alfresco-solr4</artifactId>
+                                    <version>${alfresco.platform.version}</version>
+                                    <classifier>config</classifier>
+                                    <type>zip</type>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- For windows paths, convert single \ to / for the ${alfresco.solr.data.dir} path,
+                 by default it will be c:\bla\, we need forward slash or double backslash. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fix-solr-home-path</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <name>solrDataDir</name>
+                    <value>${solr.home}</value>
+                    <regex>\\</regex>
+                    <replacement>/</replacement>
+                    <failIfNoMatch>false</failIfNoMatch>
+                </configuration>
+            </plugin>
+
+
+            <!-- Run the goal replace and update configuration files for the
+                 Solr cores to reflect our build structure -->
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <executions>
+                    <execution>
+                        <id>setup-solr-config</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <regex>false</regex>
+                    <includes>
+                        <include>${solr.home}/archive-SpacesStore/conf/solrcore.properties</include>
+                        <include>${solr.home}/workspace-SpacesStore/conf/solrcore.properties</include>
+                    </includes>
+                    <replacements>
+                        <replacement>
+                            <token>@@ALFRESCO_SOLR4_DATA_DIR@@</token>
+                            <value>${solrDataDir}/index</value>
+                        </replacement>
+                    </replacements>
+                </configuration>
+            </plugin>
+
             <!-- Configure the GMaven plugin, it will compile the Groovy files for us -->
             <plugin>
                 <groupId>org.codehaus.gmaven</groupId>
@@ -386,16 +509,36 @@
                 <artifactId>tomcat7-maven-plugin</artifactId>
                 <version>${maven.tomcat.version}</version>
                 <dependencies>
-                    <!-- Bring in the h2 database that we use for metadata -->
+                    <!-- Explicitly bring in this Plexus Archiver version so unpack and deploy of WARs goes quicker -->
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-archiver</artifactId>
+                        <version>2.3</version>
+                    </dependency>
+
+                    <!-- The following dependency is needed, otherwise you get
+                         Caused by: java.lang.NoSuchMethodError:
+                            javax.servlet.ServletContext.getSessionCookieConfig()Ljavax/servlet/SessionCookieConfig
+                       This method is in Servlet API 3.0
+
+                    <dependency>
+                        <groupId>javax.servlet</groupId>
+                        <artifactId>javax.servlet-api</artifactId>
+                        <version>3.0.1</version>
+                    </dependency>
+                    -->
+
+                    <!-- Bring in the h2 database that we use for metadata
                     <dependency>
                         <groupId>com.h2database</groupId>
                         <artifactId>h2</artifactId>
                         <version>${h2.version}</version>
                     </dependency>
+                    -->
 
                     <!-- Bring in the H2 Database scripts needed when running embedded, they are now
                          available from the standard generated artifacts, no longer needed to be picked
-                         up from the alfresco-rad project -->
+                         up from the alfresco-rad project
                     <dependency>
                         <groupId>${alfresco.groupId}</groupId>
                         <artifactId>alfresco-repository</artifactId>
@@ -408,13 +551,8 @@
                             </exclusion>
                         </exclusions>
                     </dependency>
+                    -->
 
-                    <!-- Explicitly bring in the Plexus Archiver so assembly goes quicker -->
-                    <dependency>
-                        <groupId>org.codehaus.plexus</groupId>
-                        <artifactId>plexus-archiver</artifactId>
-                        <version>2.3</version>
-                    </dependency>
                 </dependencies>
                 <executions>
                     <execution>
@@ -438,13 +576,38 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <!-- This project doesn't have packaging set to 'war', it's set to pom
+                         this setting ignores that fact. -->
                     <ignorePackaging>true</ignorePackaging>
-                    <useSeparateTomcatClassLoader>true</useSeparateTomcatClassLoader>
-                    <path>/</path>
+
+                    <!-- Make sure Catalina classes are picked up when we got virtual webapp contexts with classpaths.
+                         If true a new classLoader separated from maven core will be created to start.
+                         This does not work to run with, getting :
+                            NoSuchMethodError: javax.servlet.ServletContext.getSessionCookieConfig
+                                (which lives in Servlet API 3)
+                    <useSeparateTomcatClassLoader>false</useSeparateTomcatClassLoader>
+                                -->
+
+                    <!-- Bring in stuff in the test classpath,
+                         such as the alfresco-global.properties that should be used -->
+                    <useTestClasspath>true</useTestClasspath>
+
+                    <!-- Should this class loader delegate to the parent class loader before searching its own
+                         repositories (i.e. the usual Java2 delegation model). Prevent parent classloader delegation,
+                         each webapp loads.
                     <delegate>false</delegate>
+                    -->
+
+                    <!-- Point to Solr Home and Temp dir -->
                     <systemProperties>
                         <solr.solr.home>${solr.home}</solr.solr.home>
+                        <java.io.tmpdir>${project.build.directory}</java.io.tmpdir>
                     </systemProperties>
+
+                    <!-- Encode url in UTF-8 for proper character handling -->
+                    <uriEncoding>UTF-8</uriEncoding>
+
+                    <!-- Define webapps that should be deployed and tested -->
                     <webapps>
                         <webapp>
                             <groupId>${custom.project.groupId}</groupId>

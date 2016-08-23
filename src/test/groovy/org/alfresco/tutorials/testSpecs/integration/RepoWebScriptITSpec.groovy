@@ -46,7 +46,8 @@ class RepoWebScriptITSpec extends Specification {
         response.status == 200
         response.contentType == "text/html"
 
-        and: "Returned HTML page should contain Hello World"
-        response.data.text().contains("Hello World")
+        and: "Returned HTML page should contain Hello from JS Controller and Java Controller"
+        response.data.text().contains("Hello from JS")
+        response.data.text().contains("HelloFromJava")
     }
 }
